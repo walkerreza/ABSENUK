@@ -7,6 +7,10 @@ abstract class Routes {
   static const LOGIN = _Paths.LOGIN;
   static const PROFILE = _Paths.PROFILE;
   static const CAMERA = _Paths.CAMERA;
+  static const INTRODUCTION = _Paths.INTRODUCTION;
+  static const SETTINGS = _Paths.SETTINGS;
+  static const JADWAL = _Paths.JADWAL;
+  static const DAFTAR_MATKUL = _Paths.DAFTAR_MATKUL;
 }
 
 abstract class _Paths {
@@ -15,4 +19,8 @@ abstract class _Paths {
   static const LOGIN = '/login';
   static const PROFILE = '/profile';
   static const CAMERA = '/camera';
+  static const INTRODUCTION = '/introduction';
+  static const SETTINGS = '/settings';
+  static const JADWAL = '/jadwal';
+  static const DAFTAR_MATKUL = '/daftar-matkul';
 }
