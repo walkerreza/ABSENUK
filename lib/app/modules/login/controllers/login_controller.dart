@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:absenuk/app/data/dummy_data.dart'; // Import data dummy
+import 'package:absenuk/app/routes/app_pages.dart'; // Import rute
 
 class LoginController extends GetxController {
   // Kunci global untuk Form
@@ -38,34 +40,40 @@ class LoginController extends GetxController {
   void login() {
     // Validasi form
     if (formKey.currentState!.validate()) {
-      // Jika form valid, lanjutkan proses login
-      // Untuk saat ini, kita hanya print email dan password
-      isLoading.value = true; // Contoh jika ada proses async
-      print('Email: ${emailController.text}');
-      print('Password: ${passwordController.text}');
-
-      // TODO: Implementasikan logika login sesungguhnya di sini
-      // Misalnya, panggil API, dll.
-
-      // Contoh simulasi loading
-      Future.delayed(Duration(seconds: 2), () {
+      isLoading.value = true;
+      // Simulasi jeda untuk meniru panggilan jaringan
+      Future.delayed(const Duration(milliseconds: 500), () {
+        // Cek kredensial dengan data dummy
+        if (emailController.text == DummyUser.email &&
+            passwordController.text == DummyUser.password) {
+          // Jika berhasil, navigasi ke halaman home
+          Get.offAllNamed(Routes.HOME);
+          Get.snackbar(
+            'Login Berhasil',
+            'Selamat datang, ${DummyUser.fullName}',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          // Jika gagal, tampilkan pesan error
+          Get.snackbar(
+            'Login Gagal',
+            'Email atau password salah.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
         isLoading.value = false;
-        // Get.offAllNamed(Routes.HOME); // Contoh navigasi setelah login sukses
-        Get.snackbar(
-          'Login Berhasil',
-          'Selamat datang, ${emailController.text}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
       });
     } else {
       // Jika form tidak valid, tampilkan pesan atau biarkan validator yang bekerja
       Get.snackbar(
-        'Error Validasi',
+        'Input Tidak Valid',
         'Mohon periksa kembali input Anda.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.orange,
         colorText: Colors.white,
       );
     }

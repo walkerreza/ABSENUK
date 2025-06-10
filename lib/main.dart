@@ -74,13 +74,11 @@ void main() async { // Ubah menjadi async
         colorScheme: ColorScheme.light(
           primary: Colors.deepPurple,      // Warna utama
           secondary: Colors.purpleAccent,  // Warna aksen
-          surface: Colors.white,           // Warna permukaan seperti Card, Dialog
-          background: Colors.grey[100]!,   // Warna background Scaffold
+          surface: Colors.white,   // Warna background Scaffold
           error: Colors.red,               // Warna untuk error
           onPrimary: Colors.white,         // Warna teks/ikon di atas warna primer
           onSecondary: Colors.white,       // Warna teks/ikon di atas warna sekunder
-          onSurface: Colors.black87,       // Warna teks/ikon di atas warna permukaan
-          onBackground: Colors.black87,    // Warna teks/ikon di atas warna background
+          onSurface: Colors.black87,    // Warna teks/ikon di atas warna background
           onError: Colors.white,           // Warna teks/ikon di atas warna error
         ),
         scaffoldBackgroundColor: Colors.grey[100], // Background utama aplikasi
@@ -122,13 +120,11 @@ void main() async { // Ubah menjadi async
         colorScheme: ColorScheme.dark(
           primary: Colors.deepPurple[300]!,    // Warna utama (lebih terang)
           secondary: Colors.purpleAccent[100]!,// Warna aksen (lebih terang)
-          surface: Colors.grey[800]!,          // Warna permukaan
-          background: Colors.grey[900]!,         // Warna background Scaffold
+          surface: Colors.grey[800]!,         // Warna background Scaffold
           error: Colors.redAccent,
           onPrimary: Colors.black,           // Warna teks/ikon di atas warna primer
           onSecondary: Colors.black,         // Warna teks/ikon di atas warna sekunder
-          onSurface: Colors.white70,         // Warna teks/ikon di atas warna permukaan
-          onBackground: Colors.white70,      // Warna teks/ikon di atas warna background
+          onSurface: Colors.white70,      // Warna teks/ikon di atas warna background
           onError: Colors.black,
         ),
         scaffoldBackgroundColor: Colors.grey[900], // Background utama aplikasi
