@@ -17,6 +17,7 @@ import '../modules/profile/views/profile_view.dart';
 import '../modules/settings/bindings/settings_binding.dart';
 import '../modules/settings/views/settings_view.dart';
 
+
 part 'app_routes.dart';
 
 class AppPages {

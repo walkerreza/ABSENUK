@@ -11,6 +11,7 @@ abstract class Routes {
   static const SETTINGS = _Paths.SETTINGS;
   static const JADWAL = _Paths.JADWAL;
   static const DAFTAR_MATKUL = _Paths.DAFTAR_MATKUL;
+  static const SPLASH = _Paths.SPLASH;
 }
 
 abstract class _Paths {
@@ -23,4 +24,5 @@ abstract class _Paths {
   static const SETTINGS = '/settings';
   static const JADWAL = '/jadwal';
   static const DAFTAR_MATKUL = '/daftar-matkul';
+  static const SPLASH = '/splash';
 }

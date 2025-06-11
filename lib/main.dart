@@ -64,6 +64,7 @@ void main() async { // Ubah menjadi async
       getPages: AppPages.routes,
       locale: const Locale('id', 'ID'),
       fallbackLocale: const Locale('en', 'US'),
+      debugShowCheckedModeBanner: false,
 
       // Tema Terang (Light Mode)
       theme: ThemeData(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:absenuk/app/data/dummy_data.dart'; // Import data dummy
 import 'package:absenuk/app/routes/app_pages.dart'; // Import rute
+import 'package:get_storage/get_storage.dart';
 
 class LoginController extends GetxController {
   // Kunci global untuk Form
@@ -44,13 +45,19 @@ class LoginController extends GetxController {
       // Simulasi jeda untuk meniru panggilan jaringan
       Future.delayed(const Duration(milliseconds: 500), () {
         // Cek kredensial dengan data dummy
-        if (emailController.text == DummyUser.email &&
-            passwordController.text == DummyUser.password) {
+        if (emailController.text == DummyUser.user['email'] &&
+            passwordController.text == DummyUser.user['password']) {
+          // Simpan data pengguna ke GetStorage
+          final box = GetStorage();
+          box.write('user', DummyUser.user);
+          // Simpan waktu login saat ini
+          box.write('login_time', DateTime.now().toIso8601String());
+
           // Jika berhasil, navigasi ke halaman home
           Get.offAllNamed(Routes.HOME);
           Get.snackbar(
             'Login Berhasil',
-            'Selamat datang, ${DummyUser.fullName}',
+            'Selamat datang, ${DummyUser.user['name']}',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.green,
             colorText: Colors.white,

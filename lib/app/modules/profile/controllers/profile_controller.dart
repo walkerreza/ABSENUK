@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:absenuk/app/modules/home/controllers/home_controller.dart';
 
 class ProfileController extends GetxController {
   // TextEditingControllers untuk input fields
@@ -32,13 +34,21 @@ class ProfileController extends GetxController {
     prodiController = TextEditingController();
     passwordController = TextEditingController();
 
-    // TODO: Muat data profil yang sudah ada jika ada (misalnya dari SharedPreferences atau API)
-    // Contoh data dummy:
-    nameController.text = 'Mahasiswa Keren';
-    nimController.text = '12345001';
-    prodiController.text = 'Teknik Informatika';
-    selectedSemester.value = 1;
-    passwordController.text = 'password123';
+    _loadUserProfile();
+  }
+
+  void _loadUserProfile() {
+    final box = GetStorage();
+    final userData = box.read<Map<String, dynamic>>('user');
+    if (userData != null) {
+      nameController.text = userData['name'] ?? '';
+      // Asumsi NIM dan Prodi juga ada di data pengguna, jika tidak, biarkan kosong
+      nimController.text = userData['nim'] ?? ''; 
+      prodiController.text = userData['prodi'] ?? '';
+      passwordController.text = userData['password'] ?? '';
+      // Untuk foto, kita akan menangani path lokal, bukan URL dari dummy
+      // selectedSemester.value = userData['semester']; // Jika ada
+    }
   }
 
   @override
@@ -85,23 +95,36 @@ class ProfileController extends GetxController {
       return;
     }
 
-    // Simulasi proses penyimpanan
-    Future.delayed(const Duration(seconds: 2), () {
-      isLoading.value = false;
-      // Di sini nantinya akan ada logika untuk menyimpan data ke backend atau local storage
-      print('Data Profil Disimpan:');
-      print('Nama: ${nameController.text}');
-      print('NIM: ${nimController.text}');
-      print('Prodi: ${prodiController.text}');
-      print('Semester: ${selectedSemester.value}');
-      print('Password: ${passwordController.text}');
-      if (profileImage.value != null) {
-        print('Path Foto Profil: ${profileImage.value!.path}');
-      }
+    // Proses penyimpanan
+    final box = GetStorage();
+    // Ambil data lama untuk menjaga field yang tidak diubah (seperti photoUrl awal)
+    Map<String, dynamic> currentUserData = box.read('user') ?? {};
 
-      Get.snackbar('Berhasil', 'Profil berhasil diperbarui.',
-          snackPosition: SnackPosition.BOTTOM);
-    });
+    // Buat data baru
+    Map<String, dynamic> updatedUserData = {
+      ...currentUserData, // Salin data lama
+      'name': nameController.text,
+      'nim': nimController.text,
+      'prodi': prodiController.text,
+      'password': passwordController.text,
+      // Jika ada gambar baru, simpan path lokalnya. Jika tidak, pertahankan URL lama.
+      'photoUrl': profileImage.value?.path ?? currentUserData['photoUrl'] ?? '',
+    };
+
+    // Simpan data baru ke GetStorage
+    box.write('user', updatedUserData);
+
+    // Perbarui HomeController agar UI di home juga berubah
+    final homeController = Get.find<HomeController>();
+    homeController.userName.value = updatedUserData['name'];
+    homeController.photoUrl.value = updatedUserData['photoUrl'];
+
+    isLoading.value = false;
+    Get.back(); // Kembali ke halaman home setelah menyimpan
+    Get.snackbar('Sukses', 'Profil berhasil diperbarui.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white);
+
   }
 }
-

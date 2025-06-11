@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
@@ -11,142 +13,137 @@ class HomeView extends GetView<HomeController> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor, // Menggunakan warna dari tema
-      body: Stack(
-        children: [
-          // Elemen Dekoratif di Pojok Kiri Atas
-          Positioned(
-            top: -50,
-            left: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  // Header Kustom
-                  _buildHeader(context, controller),
-                  const SizedBox(height: 24.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              // Header Kustom
+              _buildHeader(context, controller),
+              const SizedBox(height: 30.0),
 
-                  // Placeholder Logo Institusi
-                  _buildLogoPlaceholder(context),
-                  const SizedBox(height: 24.0),
-
-                  // Grid Menu
-                  _buildMenuGrid(context, controller),
-                  const SizedBox(height: 24.0),
-
-                  // Bagian Event (Placeholder)
-                  _buildEventSection(context),
-                  const SizedBox(height: 20.0),
-                ],
+              // Judul Bagian Menu
+              Text(
+                'Menu Utama',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+              const SizedBox(height: 16.0),
+
+              // Grid Menu
+              _buildMenuGrid(context, controller),
+              const SizedBox(height: 30.0),
+
+              // Judul Bagian Event
+              Text(
+                'Informasi & Acara',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16.0),
+
+              // Bagian Event (Placeholder)
+              _buildEventSection(context),
+              const SizedBox(height: 20.0),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context, HomeController controller) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Obx(() => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selamat Datang,',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                  ),
-                ),
-                Text(
-                  controller.userName.value,
-                  style: TextStyle(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ],
-            )),
-        Row(
-          children: <Widget>[
-            IconButton(
-              // Warna ikon akan diambil dari IconTheme global atau bisa diset eksplisit
-              icon: Icon(Icons.person_outline, size: 28 /* color: Theme.of(context).primaryColor */),
-              onPressed: controller.goToProfile,
-              tooltip: 'Profil',
-            ),
-            IconButton(
-              icon: Icon(Icons.settings_outlined, size: 28 /* color: Theme.of(context).primaryColor */),
-              onPressed: controller.goToSettings,
-              tooltip: 'Pengaturan',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLogoPlaceholder(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
+      padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor, // Menggunakan cardColor atau colorScheme.surface
-        borderRadius: BorderRadius.circular(12.0),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).primaryColor.withAlpha(200),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
+            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          )
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Ganti dengan Image.asset jika punya logo
-          Icon(Icons.school_outlined, size: 40, color: Theme.of(context).primaryColor),
-          const SizedBox(width: 12.0),
-          Flexible(
-            child: Text(
-              'Akademi Komunitas Negeri\nPutra Sang Fajar Blitar',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface, // Warna teks di atas surface/card
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Obx(() => Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Selamat Datang,',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                    Text(
+                      controller.userName.value,
+                      style: const TextStyle(
+                        fontSize: 24.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              )),
+          Row(
+            children: <Widget>[
+              // Avatar Profil Pengguna
+              Obx(() {
+                return GestureDetector(
+                  onTap: controller.goToProfile,
+                  child: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Colors.white,
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Theme.of(context).primaryColor,
+                      backgroundImage: controller.photoUrl.value.isNotEmpty
+                          ? (controller.photoUrl.value.startsWith('http')
+                              ? NetworkImage(controller.photoUrl.value)
+                              : FileImage(File(controller.photoUrl.value)) as ImageProvider)
+                          : null,
+                      child: controller.photoUrl.value.isEmpty
+                          ? const Icon(
+                              Icons.person_outline,
+                              size: 28,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
+                  ),
+                );
+              }),
+              const SizedBox(width: 8),
+              // Tombol Pengaturan
+              IconButton(
+                icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 28),
+                onPressed: controller.goToSettings,
+                tooltip: 'Pengaturan',
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildMenuGrid(BuildContext context, HomeController controller) {
     final menuItems = [
@@ -162,7 +159,7 @@ class HomeView extends GetView<HomeController> {
       crossAxisCount: 2,
       crossAxisSpacing: 16.0,
       mainAxisSpacing: 16.0,
-      childAspectRatio: 1.2, // Sesuaikan rasio aspek kartu
+      childAspectRatio: 1.1, // Sesuaikan rasio aspek kartu
       children: menuItems.map((item) {
         return _buildMenuItem(
           context,
@@ -175,37 +172,30 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildMenuItem(BuildContext context, IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor, // Menggunakan cardColor atau colorScheme.surface
-          borderRadius: BorderRadius.circular(12.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(icon, size: 40.0, color: Theme.of(context).primaryColor), // Ikon menggunakan primaryColor dari tema
-            const SizedBox(height: 12.0),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14.0,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface, // Warna teks di atas surface/card
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(icon, size: 36, color: Theme.of(context).primaryColor),
+              const Spacer(),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

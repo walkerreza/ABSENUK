@@ -1,11 +1,27 @@
 import 'package:get/get.dart';
-import 'package:absenuk/app/routes/app_pages.dart'; // Pastikan import ini ada dan benar
+import 'package:get_storage/get_storage.dart';
+import 'package:absenuk/app/routes/app_pages.dart';
 
 class HomeController extends GetxController {
   //TODO: Implement HomeController
 
-  // Contoh nama pengguna, bisa diambil dari data login nantinya
-  final RxString userName = 'RAGIL'.obs;
+  final RxString userName = ''.obs;
+  final RxString photoUrl = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final box = GetStorage();
+    final userData = box.read<Map<String, dynamic>>('user');
+    if (userData != null) {
+      userName.value = userData['name'] ?? 'Pengguna';
+      photoUrl.value = userData['photoUrl'] ?? '';
+    }
+  }
 
   // Fungsi navigasi
   void goToProfile() {
@@ -17,13 +33,11 @@ class HomeController extends GetxController {
   }
 
   void goToAbsenMasuk() {
-    Get.snackbar('Informasi', 'Fitur Absen Masuk belum diimplementasikan.');
-    // Contoh: Get.toNamed(Routes.ABSEN_MASUK);
+    Get.toNamed(Routes.CAMERA, arguments: {'type': 'Masuk'});
   }
 
   void goToAbsenKeluar() {
-    Get.snackbar('Informasi', 'Fitur Absen Keluar belum diimplementasikan.');
-    // Contoh: Get.toNamed(Routes.ABSEN_KELUAR);
+    Get.toNamed(Routes.CAMERA, arguments: {'type': 'Keluar'});
   }
 
   void goToJadwalPresensi() {

@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../controllers/profile_controller.dart';
+import '../../home/controllers/home_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -61,16 +64,34 @@ class ProfileView extends GetView<ProfileController> {
       child: Stack(
         alignment: Alignment.bottomRight,
         children: [
-          Obx(() => CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey[300],
-                backgroundImage: controller.profileImage.value != null
-                    ? FileImage(controller.profileImage.value!)
-                    : null,
-                child: controller.profileImage.value == null
-                    ? Icon(Icons.person, size: 60, color: Colors.grey[600])
-                    : null,
-              )),
+          Obx(() {
+            // Dapatkan home controller untuk mengakses photoUrl yang sudah ada
+            final homeController = Get.find<HomeController>();
+            ImageProvider? backgroundImage;
+
+            // Prioritas 1: Gambar baru yang dipilih oleh pengguna
+            if (controller.profileImage.value != null) {
+              backgroundImage = FileImage(controller.profileImage.value!);
+            } 
+            // Prioritas 2: Gambar yang sudah ada dari sesi sebelumnya (bisa URL atau path file)
+            else if (homeController.photoUrl.value.isNotEmpty) {
+              final photoPath = homeController.photoUrl.value;
+              if (photoPath.startsWith('http')) {
+                backgroundImage = NetworkImage(photoPath);
+              } else {
+                backgroundImage = FileImage(File(photoPath));
+              }
+            }
+
+            return CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.grey[300],
+              backgroundImage: backgroundImage,
+              child: backgroundImage == null
+                  ? Icon(Icons.person, size: 60, color: Colors.grey[600])
+                  : null,
+            );
+          }),
           Material(
             color: primaryColor,
             shape: const CircleBorder(),
