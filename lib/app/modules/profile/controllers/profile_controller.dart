@@ -10,12 +10,13 @@ class ProfileController extends GetxController {
   // TextEditingControllers untuk input fields
   late TextEditingController nameController;
   late TextEditingController nimController;
-  late TextEditingController prodiController;
+
   late TextEditingController passwordController;
 
   // Variabel reaktif
   final Rx<File?> profileImage = Rx<File?>(null);
-  final Rx<int?> selectedSemester = Rx<int?>(null); // Default null, atau bisa diisi nilai awal
+  final Rx<int?> selectedSemester = Rx<int?>(null);
+  final Rx<String?> selectedProdi = Rx<String?>(null);
   final RxBool obscurePassword = true.obs;
   final RxBool isLoading = false.obs;
 
@@ -23,7 +24,15 @@ class ProfileController extends GetxController {
   final ImagePicker _picker = ImagePicker();
 
   // Daftar semester untuk Dropdown
-  final List<int> semesters = [1, 2, 3, 4]; // Sesuai permintaan USER
+  final List<int> semesters = [1, 2, 3, 4];
+
+  // Daftar program studi untuk Dropdown
+  final List<String> prodiList = [
+    'ASJK (Administrasi Server dan Jaringan Komputer)',
+    'OPD (Operasionalisasi Perkantoran Digital)',
+    'PAV (Penyuntingan Audio Video)',
+    'PHTU (Pengolahan Hasil Ternak Unggas)',
+  ];
 
   @override
   void onInit() {
@@ -31,7 +40,7 @@ class ProfileController extends GetxController {
     // Inisialisasi controllers
     nameController = TextEditingController();
     nimController = TextEditingController();
-    prodiController = TextEditingController();
+
     passwordController = TextEditingController();
 
     _loadUserProfile();
@@ -44,7 +53,9 @@ class ProfileController extends GetxController {
       nameController.text = userData['name'] ?? '';
       // Asumsi NIM dan Prodi juga ada di data pengguna, jika tidak, biarkan kosong
       nimController.text = userData['nim'] ?? ''; 
-      prodiController.text = userData['prodi'] ?? '';
+      if (userData['prodi'] != null && prodiList.contains(userData['prodi'])) {
+        selectedProdi.value = userData['prodi'];
+      }
       passwordController.text = userData['password'] ?? '';
       // Untuk foto, kita akan menangani path lokal, bukan URL dari dummy
       // selectedSemester.value = userData['semester']; // Jika ada
@@ -56,7 +67,7 @@ class ProfileController extends GetxController {
     // Dispose controllers untuk menghindari memory leaks
     nameController.dispose();
     nimController.dispose();
-    prodiController.dispose();
+
     passwordController.dispose();
     super.onClose();
   }
@@ -86,7 +97,7 @@ class ProfileController extends GetxController {
     // Validasi sederhana (bisa ditambahkan validasi lebih detail)
     if (nameController.text.isEmpty ||
         nimController.text.isEmpty ||
-        prodiController.text.isEmpty ||
+        selectedProdi.value == null ||
         passwordController.text.isEmpty ||
         selectedSemester.value == null) {
       Get.snackbar('Error', 'Semua field harus diisi.',
@@ -105,7 +116,7 @@ class ProfileController extends GetxController {
       ...currentUserData, // Salin data lama
       'name': nameController.text,
       'nim': nimController.text,
-      'prodi': prodiController.text,
+      'prodi': selectedProdi.value!,
       'password': passwordController.text,
       // Jika ada gambar baru, simpan path lokalnya. Jika tidak, pertahankan URL lama.
       'photoUrl': profileImage.value?.path ?? currentUserData['photoUrl'] ?? '',

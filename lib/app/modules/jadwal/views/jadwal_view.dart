@@ -77,10 +77,10 @@ class JadwalView extends GetView<JadwalController> {
                     // Kustomisasi tampilan tanggal default
                     defaultBuilder: (context, day, focusedDay) {
                       bool? isHadir = controller.getAttendanceStatus(day);
-                      if (isHadir != null) {
-                        return _buildDayCell(day, isHadir ? hadirColor : tidakHadirColor, Colors.white);
+                      if (isHadir == null) {
+                        return null; // Gunakan tampilan default jika tidak ada data
                       }
-                      return null; // Gunakan tampilan default jika tidak ada data
+                      return _buildDayCell(day, isHadir ? hadirColor : tidakHadirColor, Colors.white);
                     },
                     // Kustomisasi tampilan tanggal yang dipilih
                     selectedBuilder: (context, day, focusedDay) {

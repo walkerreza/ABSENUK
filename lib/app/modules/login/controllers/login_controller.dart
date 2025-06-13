@@ -9,7 +9,7 @@ class LoginController extends GetxController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   // Controller untuk TextField
-  late TextEditingController emailController;
+  late TextEditingController nimController;
   late TextEditingController passwordController;
 
   // Variabel untuk mengontrol visibilitas password
@@ -21,13 +21,13 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    emailController = TextEditingController();
+    nimController = TextEditingController();
     passwordController = TextEditingController();
   }
 
   @override
   void onClose() {
-    emailController.dispose();
+    nimController.dispose();
     passwordController.dispose();
     super.onClose();
   }
@@ -45,7 +45,7 @@ class LoginController extends GetxController {
       // Simulasi jeda untuk meniru panggilan jaringan
       Future.delayed(const Duration(milliseconds: 500), () {
         // Cek kredensial dengan data dummy
-        if (emailController.text == DummyUser.user['email'] &&
+        if (nimController.text == DummyUser.user['nim'] &&
             passwordController.text == DummyUser.user['password']) {
           // Simpan data pengguna ke GetStorage
           final box = GetStorage();
@@ -66,7 +66,7 @@ class LoginController extends GetxController {
           // Jika gagal, tampilkan pesan error
           Get.snackbar(
             'Login Gagal',
-            'Email atau password salah.',
+            'NIM atau password salah.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,

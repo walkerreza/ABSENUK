@@ -41,11 +41,7 @@ class ProfileView extends GetView<ProfileController> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16.0),
-              _buildTextField(
-                controller: controller.prodiController,
-                labelText: 'Program Studi / Jurusan',
-                icon: Icons.school_outlined,
-              ),
+              _buildProdiDropdown(controller, primaryColor),
               const SizedBox(height: 16.0),
               _buildSemesterDropdown(controller, primaryColor),
               const SizedBox(height: 16.0),
@@ -192,6 +188,34 @@ class ProfileView extends GetView<ProfileController> {
             fillColor: Colors.white,
           ),
           validator: (value) => value == null ? 'Pilih semester' : null,
+        ));
+  }
+
+  Widget _buildProdiDropdown(ProfileController controller, Color primaryColor) {
+    return Obx(() => DropdownButtonFormField<String>(
+          value: controller.selectedProdi.value,
+          items: controller.prodiList.map((String prodi) {
+            return DropdownMenuItem<String>(
+              value: prodi,
+              child: Text(prodi, overflow: TextOverflow.ellipsis),
+            );
+          }).toList(),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              controller.selectedProdi.value = newValue;
+            }
+          },
+          decoration: InputDecoration(
+            labelText: 'Program Studi',
+            prefixIcon: const Icon(Icons.school_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
+          isExpanded: true,
+          validator: (value) => value == null ? 'Pilih program studi' : null,
         ));
   }
 

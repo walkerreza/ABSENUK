@@ -69,92 +69,90 @@ void main() async { // Ubah menjadi async
       // Tema Terang (Light Mode)
       theme: ThemeData(
         brightness: Brightness.light,
-        primarySwatch: Colors.deepPurple, // Warna utama untuk komponen seperti AppBar, FloatingActionButton
-        primaryColor: Colors.deepPurple, // Warna utama spesifik
-        // accentColor: Colors.purpleAccent, // (deprecated, gunakan colorScheme.secondary)
-        colorScheme: ColorScheme.light(
-          primary: Colors.deepPurple,      // Warna utama
-          secondary: Colors.purpleAccent,  // Warna aksen
-          surface: Colors.white,   // Warna background Scaffold
-          error: Colors.red,               // Warna untuk error
-          onPrimary: Colors.white,         // Warna teks/ikon di atas warna primer
-          onSecondary: Colors.white,       // Warna teks/ikon di atas warna sekunder
-          onSurface: Colors.black87,    // Warna teks/ikon di atas warna background
-          onError: Colors.white,           // Warna teks/ikon di atas warna error
+        primarySwatch: Colors.purple,
+        primaryColor: const Color(0xFF8E2DE2),
+        colorScheme: const ColorScheme.light(
+          primary: Color(0xFF8E2DE2),      // Ungu Modern
+          secondary: Color(0xFFdd2476),  // Merah Modern
+          surface: Colors.white,
+          error: Colors.red,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: Colors.black87,
+          onError: Colors.white,
         ),
-        scaffoldBackgroundColor: Colors.grey[100], // Background utama aplikasi
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.deepPurple, // Warna AppBar
-          foregroundColor: Colors.white,      // Warna teks dan ikon di AppBar
+        scaffoldBackgroundColor: Colors.grey[100],
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF8E2DE2),
+          foregroundColor: Colors.white,
           elevation: 4.0,
         ),
         buttonTheme: const ButtonThemeData(
-          buttonColor: Colors.deepPurple,    // Warna default tombol
+          buttonColor: Color(0xFF8E2DE2),
           textTheme: ButtonTextTheme.primary,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF8E2DE2),
             foregroundColor: Colors.white,
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.deepPurple, 
+            foregroundColor: const Color(0xFF8E2DE2),
           ),
         ),
         iconTheme: const IconThemeData(
-          color: Colors.deepPurple, // Warna default ikon
+          color: Color(0xFF8E2DE2),
         ),
         textTheme: applyCustomTextStyle(
-          ThemeData.light().textTheme, // Ambil TextTheme default terang
-          const TextStyle(shadows: lightTextOutlineShadows), // Warna default, hanya tambah outline
+          ThemeData.light().textTheme,
+          const TextStyle(shadows: lightTextOutlineShadows),
         ),
       ),
 
       // Tema Gelap (Dark Mode)
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        primarySwatch: Colors.deepPurple, // Bisa sama atau beda dengan light mode
-        primaryColor: Colors.deepPurple[300], // Warna utama lebih terang untuk kontras di mode gelap
-        // accentColor: Colors.purpleAccent[100], // (deprecated)
+        primarySwatch: Colors.purple,
+        primaryColor: const Color(0xFFa531f2),
         colorScheme: ColorScheme.dark(
-          primary: Colors.deepPurple[300]!,    // Warna utama (lebih terang)
-          secondary: Colors.purpleAccent[100]!,// Warna aksen (lebih terang)
-          surface: Colors.grey[800]!,         // Warna background Scaffold
+          primary: const Color(0xFFa531f2),      // Ungu lebih terang untuk mode gelap
+          secondary: const Color(0xFFdd2476),    // Merah tetap cerah untuk aksen
+          surface: Colors.grey[800]!,
           error: Colors.redAccent,
-          onPrimary: Colors.black,           // Warna teks/ikon di atas warna primer
-          onSecondary: Colors.black,         // Warna teks/ikon di atas warna sekunder
-          onSurface: Colors.white70,      // Warna teks/ikon di atas warna background
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onSurface: Colors.white70,
           onError: Colors.black,
         ),
-        scaffoldBackgroundColor: Colors.grey[900], // Background utama aplikasi
+        scaffoldBackgroundColor: Colors.grey[900],
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.grey[850], // Warna AppBar lebih gelap
-          foregroundColor: Colors.white,     // Warna teks dan ikon di AppBar
+          backgroundColor: Colors.grey[850],
+          foregroundColor: Colors.white,
           elevation: 4.0,
         ),
-        buttonTheme: ButtonThemeData(
-          buttonColor: Colors.deepPurple[300], 
+        buttonTheme: const ButtonThemeData(
+          buttonColor: Color(0xFFa531f2),
           textTheme: ButtonTextTheme.primary,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple[300],
-            foregroundColor: Colors.black,
+            backgroundColor: const Color(0xFFa531f2),
+            foregroundColor: Colors.white,
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: Colors.deepPurple[300], 
+            foregroundColor: const Color(0xFFa531f2),
           ),
         ),
-        iconTheme: IconThemeData(
-          color: Colors.deepPurple[300], // Warna default ikon
+        iconTheme: const IconThemeData(
+          color: Color(0xFFa531f2),
         ),
         textTheme: applyCustomTextStyle(
-          ThemeData.dark().textTheme, // Ambil TextTheme default gelap
-          TextStyle(color: Colors.white, shadows: darkTextOutlineShadows), // Warna putih dengan outline
+          ThemeData.dark().textTheme,
+          const TextStyle(color: Colors.white, shadows: darkTextOutlineShadows),
         ),
       ),
 
