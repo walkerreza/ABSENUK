@@ -12,6 +12,10 @@ abstract class Routes {
   static const JADWAL = _Paths.JADWAL;
   static const DAFTAR_MATKUL = _Paths.DAFTAR_MATKUL;
   static const SPLASH = _Paths.SPLASH;
+  static const TOOLS = _Paths.TOOLS;
+  static const JOURNAL = _Paths.JOURNAL;
+  static const PERMISSION_TEMPLATE = _Paths.PERMISSION_TEMPLATE;
+  static const PERMISSION_EDITOR = _Paths.PERMISSION_EDITOR;
 }
 
 abstract class _Paths {
@@ -25,4 +29,8 @@ abstract class _Paths {
   static const JADWAL = '/jadwal';
   static const DAFTAR_MATKUL = '/daftar-matkul';
   static const SPLASH = '/splash';
+  static const TOOLS = '/tools';
+  static const JOURNAL = '/journal';
+  static const PERMISSION_TEMPLATE = '/permission-template';
+  static const PERMISSION_EDITOR = '/permission-editor';
 }

@@ -44,11 +44,49 @@ class SettingsView extends GetView<SettingsController> {
               )),
           const Divider(height: 32, indent: 16, endIndent: 16),
 
+          // Notifikasi
+          _buildSectionTitle(context, 'Notifikasi'),
+          Obx(() => SwitchListTile(
+                title: const Text('Pengingat Absen Harian'),
+                subtitle: const Text('Pagi (08:00) dan Siang (13:00)'),
+                value: controller.isReminderEnabled.value,
+                onChanged: controller.toggleReminder,
+                activeColor: primaryColor,
+              )),
+          ListTile(
+            title: const Text('Uji Notifikasi Sekarang'),
+            subtitle: const Text('Tampilkan notifikasi percobaan secara instan'),
+            leading: Icon(Icons.notifications_active_outlined, color: primaryColor),
+            onTap: controller.runTestNotification,
+          ),
+
+          // Pintasan Kampus
+          _buildSectionTitle(context, 'Pintasan Kampus'),
+          ListTile(
+            leading: Icon(Icons.public, color: primaryColor),
+            title: const Text('Portal Kampus'),
+            subtitle: const Text('https://akb.ac.id/'),
+            onTap: () => controller.launchURL('https://akb.ac.id/'),
+          ),
+          ListTile(
+            leading: Icon(Icons.school, color: primaryColor),
+            title: const Text('Sistem Informasi Akademik'),
+            subtitle: const Text('https://student.akb.ac.id/'),
+            onTap: () => controller.launchURL('https://student.akb.ac.id/'),
+          ),
+          ListTile(
+            leading: Icon(Icons.book, color: primaryColor),
+            title: const Text('LMS'),
+            subtitle: const Text('https://lms.akb.ac.id/'),
+            onTap: () => controller.launchURL('https://lms.akb.ac.id/'),
+          ),
+          const Divider(height: 32, indent: 16, endIndent: 16),
+
           // Pengaturan Akun
           _buildSectionTitle(context, 'Akun'),
           ListTile(
-            leading: Icon(Icons.logout, color: Colors.red[700]),
-            title: Text('Logout', style: TextStyle(color: Colors.red[700])),
+            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+            title: Text('Logout', style: TextStyle(color: Theme.of(context).colorScheme.error)),
             onTap: () {
               _showLogoutConfirmationDialog(context, controller, primaryColor);
             },
@@ -77,7 +115,7 @@ class SettingsView extends GetView<SettingsController> {
         title.toUpperCase(),
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Theme.of(context).primaryColorDark, // Atau warna lain yang sesuai tema
+          color: Theme.of(context).colorScheme.primary, // Menggunakan warna dari ColorScheme
           fontSize: 14,
         ),
       ),

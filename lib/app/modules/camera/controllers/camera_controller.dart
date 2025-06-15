@@ -1,62 +1,83 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CameraController extends GetxController {
-  // Variabel untuk menyimpan tipe absen ('Masuk' atau 'Keluar')
+class CameraViewController extends GetxController {
+  late List<CameraDescription> _cameras;
+  late CameraController cameraController;
   late String absenType;
 
-  //TODO: Implement CameraController
-
-  final count = 0.obs;
-
-  // Variabel untuk mengontrol state UI
-  // false = Tampilan sebelum scan
-  // true = Tampilan setelah scan
-    var isPictureTaken = false.obs;
+  var isCameraInitialized = false.obs;
+  var isPictureTaken = false.obs;
+  XFile? capturedImage;
 
   @override
   void onInit() {
     super.onInit();
-    // Mengambil argumen yang dikirim dari halaman sebelumnya
     final args = Get.arguments as Map<String, dynamic>?;
-    absenType = args?['type'] ?? 'Tidak Diketahui'; // Default value jika argumen null
+    absenType = args?['type'] ?? 'Tidak Diketahui';
+    _initializeCamera();
   }
 
-  // Fungsi untuk mensimulasikan pengambilan gambar
-  void takePicture() {
-    print('Mengambil gambar...');
-    isPictureTaken.value = true;
+  Future<void> _initializeCamera() async {
+    try {
+      _cameras = await availableCameras();
+      // Gunakan kamera depan (biasanya index 1)
+      cameraController = CameraController(
+        _cameras.firstWhere(
+          (camera) => camera.lensDirection == CameraLensDirection.front,
+          orElse: () => _cameras.first, // Fallback ke kamera pertama jika tidak ada kamera depan
+        ),
+        ResolutionPreset.high,
+      );
+      await cameraController.initialize();
+      isCameraInitialized.value = true;
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menginisialisasi kamera: ${e.toString()}');
+      print('Error initializing camera: $e');
+    }
   }
 
-  // Fungsi untuk kembali ke state awal
+  void takePicture() async {
+    if (!cameraController.value.isInitialized) {
+      Get.snackbar('Error', 'Kamera belum siap.');
+      return;
+    }
+    try {
+      final image = await cameraController.takePicture();
+      capturedImage = image;
+      isPictureTaken.value = true;
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal mengambil gambar: ${e.toString()}');
+    }
+  }
+
   void reset() {
-    print('Mereset kamera...');
     isPictureTaken.value = false;
+    capturedImage = null;
   }
 
-  // Fungsi untuk jeda (placeholder)
-  void pause() {
-    print('Proses dijeda.');
-    // Logika jeda bisa ditambahkan di sini
-  }
-
-  // Fungsi untuk menyimpan dan keluar
   void saveAndStop() {
-    print('Menyimpan gambar untuk absen $absenType');
-    // TODO: Implementasikan logika penyimpanan gambar atau pengiriman ke server di sini
-
-    Get.back(); // Kembali ke halaman home
-
-    // Tampilkan notifikasi sukses
-    Get.snackbar(
-      'Berhasil',
-      'Anda telah berhasil melakukan absen $absenType.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(10),
-    );
+    if (capturedImage != null) {
+      print('Gambar disimpan di: ${capturedImage!.path}');
+      // TODO: Implementasikan logika penyimpanan gambar atau pengiriman ke server di sini
+      Get.back();
+      Get.snackbar(
+        'Berhasil',
+        'Anda telah berhasil melakukan absen $absenType.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(10),
+      );
+    } else {
+      Get.snackbar('Error', 'Tidak ada gambar untuk disimpan.');
+    }
   }
 
-  void increment() => count.value++;
+  @override
+  void onClose() {
+    cameraController.dispose();
+    super.onClose();
+  }
 }

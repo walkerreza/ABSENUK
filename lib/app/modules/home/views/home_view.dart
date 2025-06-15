@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
 import '../controllers/home_controller.dart';
+import '../info_model.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -34,7 +36,9 @@ class HomeView extends GetView<HomeController> {
 
               // Grid Menu
               _buildMenuGrid(context, controller),
-              const SizedBox(height: 30.0),
+              const SizedBox(height: 24.0),
+              _buildToolsButton(context, controller),
+              const SizedBox(height: 24.0),
 
               // Judul Bagian Event
               Text(
@@ -45,8 +49,8 @@ class HomeView extends GetView<HomeController> {
               ),
               const SizedBox(height: 16.0),
 
-              // Bagian Event (Placeholder)
-              _buildEventSection(context),
+              // Bagian Event (Dinamis)
+              _buildEventSection(context, controller),
               const SizedBox(height: 20.0),
             ],
           ),
@@ -99,6 +103,15 @@ class HomeView extends GetView<HomeController> {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 8),
+                    Obx(() => Text(
+                          controller.currentTime.value,
+                          style: TextStyle(
+                            fontSize: 14.0,
+                            color: Colors.white.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
                   ],
                 ),
               )),
@@ -201,44 +214,283 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildEventSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          'Info & Event Terbaru',
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+  Widget _buildEventSection(BuildContext context, HomeController controller) {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return _buildShimmerEffect();
+      }
+
+      if (controller.hasError.value) {
+        return SizedBox(
+          height: 220,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                const Text('Gagal memuat informasi.', style: TextStyle(fontSize: 16)),
+                const SizedBox(height: 8),
+                ElevatedButton(
+                  onPressed: () => controller.fetchInfoData(isRefresh: true),
+                  child: const Text('Coba Lagi'),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12.0),
-        Container(
+        );
+      }
+
+      if (controller.infoItems.isEmpty) {
+        return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16.0),
-          height: 150, // Tinggi placeholder event
+          height: 150,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: Colors.grey[300]!)
-            // boxShadow: [
-            //   BoxShadow(
-            //     color: Colors.grey.withOpacity(0.1),
-            //     spreadRadius: 1,
-            //     blurRadius: 5,
-            //     offset: const Offset(0, 2),
-            //   ),
-            // ],
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Center(
             child: Text(
-              'Belum ada event saat ini.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 15.0),
+              'Tidak ada informasi & acara saat ini.',
+              style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 15.0),
+            ),
+          ),
+        );
+      }
+
+      return SizedBox(
+        height: 220,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: controller.canLoadMore.value
+              ? controller.infoItems.length + 1
+              : controller.infoItems.length,
+          itemBuilder: (context, index) {
+            if (index < controller.infoItems.length) {
+              final info = controller.infoItems[index];
+              return _buildInfoCard(context, controller, info);
+            } else {
+              return _buildLoadMoreCard(context, controller);
+            }
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildInfoCard(BuildContext context, HomeController controller, InfoModel info) {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16.0),
+      child: Card(
+        elevation: 3.0,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: InkWell(
+          onTap: () => controller.showInfoPreview(info),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 120,
+                width: double.infinity,
+                child: Image.network(
+                  info.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(
+                      child: Icon(Icons.broken_image, size: 40),
+                    );
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      info.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4.0),
+                    Text(
+                      info.date,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreCard(BuildContext context, HomeController controller) {
+    return Obx(() {
+      return Container(
+        width: 150,
+        margin: const EdgeInsets.only(right: 16.0),
+        child: Card(
+          elevation: 3.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: InkWell(
+            onTap: controller.isLoadingMore.value ? null : controller.fetchMoreInfoData,
+            borderRadius: BorderRadius.circular(12.0),
+            child: Center(
+              child: controller.isLoadingMore.value
+                  ? const CircularProgressIndicator()
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Lihat Lainnya',
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ),
-      ],
+      );
+    });
+  }
+
+  // Widget untuk efek shimmer loading
+  Widget _buildShimmerEffect() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SizedBox(
+        height: 220,
+        child: ListView.builder(
+          physics: const NeverScrollableScrollPhysics(), // Disable scroll
+          scrollDirection: Axis.horizontal,
+          itemCount: 2, // Tampilkan 2 placeholder
+          itemBuilder: (context, index) {
+            return _buildShimmerPlaceholder();
+          },
+        ),
+      ),
+    );
+  }
+
+  // Widget untuk satu kartu placeholder shimmer
+  Widget _buildShimmerPlaceholder() {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16.0),
+      child: Card(
+        elevation: 3.0,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Placeholder untuk gambar
+            Container(
+              height: 120,
+              width: double.infinity,
+              color: Colors.white, // Warna dasar shimmer
+            ),
+            // Placeholder untuk teks
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 18, // Kira-kira setinggi text titleMedium
+                    width: 220,
+                    decoration: BoxDecoration(
+                        color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  ),
+                  const SizedBox(height: 6.0),
+                  Container(
+                    height: 14, // Kira-kira setinggi text bodySmall
+                    width: 100,
+                    decoration: BoxDecoration(
+                        color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolsButton(BuildContext context, HomeController controller) {
+    return GestureDetector(
+      onTap: () => controller.goToTools(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(color: Theme.of(context).dividerColor),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.construction, // Ikon palu dan kunci pas
+              color: Theme.of(context).colorScheme.primary,
+              size: 28,
+            ),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Text(
+                'Peralatan Mahasiswa',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
     );
   }
 }

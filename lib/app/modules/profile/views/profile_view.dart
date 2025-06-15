@@ -11,7 +11,7 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Colors.deepPurple; // Sesuaikan dengan tema aplikasi
+    final Color primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
       appBar: AppBar(
@@ -81,10 +81,10 @@ class ProfileView extends GetView<ProfileController> {
 
             return CircleAvatar(
               radius: 60,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               backgroundImage: backgroundImage,
               child: backgroundImage == null
-                  ? Icon(Icons.person, size: 60, color: Colors.grey[600])
+                  ? Icon(Icons.person, size: 60, color: Theme.of(context).colorScheme.onSurfaceVariant)
                   : null,
             );
           }),
@@ -148,11 +148,6 @@ class ProfileView extends GetView<ProfileController> {
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-        ),
-        filled: true,
-        fillColor: Colors.white,
         suffixIcon: suffixIcon,
       ),
       validator: (value) {
@@ -178,14 +173,9 @@ class ProfileView extends GetView<ProfileController> {
               controller.selectedSemester.value = newValue;
             }
           },
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Semester Saat Ini',
-            prefixIcon: const Icon(Icons.format_list_numbered_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+            prefixIcon: Icon(Icons.format_list_numbered_outlined),
           ),
           validator: (value) => value == null ? 'Pilih semester' : null,
         ));
@@ -205,14 +195,9 @@ class ProfileView extends GetView<ProfileController> {
               controller.selectedProdi.value = newValue;
             }
           },
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Program Studi',
-            prefixIcon: const Icon(Icons.school_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+            prefixIcon: Icon(Icons.school_outlined),
           ),
           isExpanded: true,
           validator: (value) => value == null ? 'Pilih program studi' : null,

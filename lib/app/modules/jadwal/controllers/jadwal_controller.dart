@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:absenuk/app/data/models/holiday_model.dart';
+import 'package:absenuk/app/data/providers/holiday_provider.dart';
 
 class JadwalController extends GetxController {
   // Observable untuk hari yang sedang difokuskan di kalender
@@ -12,11 +14,37 @@ class JadwalController extends GetxController {
   // Kita buat tanggalnya tanpa informasi jam, menit, detik agar perbandingan lebih mudah
   final RxMap<DateTime, bool> attendanceData = <DateTime, bool>{}.obs;
 
+  // Untuk data hari libur dari API
+  final HolidayProvider _holidayProvider = HolidayProvider();
+  var holidays = <Holiday>[].obs;
+  var isLoadingHolidays = true.obs;
+
   @override
   void onInit() {
     super.onInit();
     selectedDay.value = focusedDay.value; // Awalnya, hari terpilih adalah hari ini
     loadInitialAttendanceData();
+    _fetchHolidays(focusedDay.value.year);
+  }
+
+  void onPageChanged(DateTime focused) {
+    focusedDay.value = focused;
+    // Jika tahun berubah, ambil data hari libur untuk tahun yang baru
+    if (holidays.isNotEmpty && focused.year != holidays.first.date.year) {
+      _fetchHolidays(focused.year);
+    }
+  }
+
+  Future<void> _fetchHolidays(int year) async {
+    try {
+      isLoadingHolidays.value = true;
+      final fetchedHolidays = await _holidayProvider.getHolidays(year);
+      holidays.value = fetchedHolidays;
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal memuat data hari libur: $e');
+    } finally {
+      isLoadingHolidays.value = false;
+    }
   }
 
   void onDaySelected(DateTime selected, DateTime focused) {
@@ -81,12 +109,22 @@ class JadwalController extends GetxController {
   }
 
   // Fungsi ini akan dipanggil oleh TableCalendar untuk mendapatkan event per hari
-  // Dalam kasus kita, 'event' adalah status kehadiran (true/false)
-  List<bool> getEventsForDay(DateTime day) {
-    final status = getAttendanceStatus(day);
+  // Event bisa berupa status kehadiran (bool) atau hari libur (Holiday)
+  List<dynamic> getEventsForDay(DateTime day) {
+    final normalizedDay = DateTime.utc(day.year, day.month, day.day);
+
+    // Cek apakah ada data kehadiran untuk hari ini
+    final status = attendanceData[normalizedDay];
+    
+    // Cek apakah hari ini adalah hari libur
+    final holidayEvents = holidays.where((holiday) => isSameDay(holiday.date, day)).toList();
+
+    final List<dynamic> events = [];
     if (status != null) {
-      return [status]; // Kembalikan list berisi status jika ada
+      events.add(status);
     }
-    return []; // Kembalikan list kosong jika tidak ada data
+    events.addAll(holidayEvents);
+
+    return events;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart'; // Untuk format tanggal
 import 'package:table_calendar/table_calendar.dart';
+import 'package:absenuk/app/data/models/holiday_model.dart';
 import '../controllers/jadwal_controller.dart';
 
 class JadwalView extends GetView<JadwalController> {
@@ -51,9 +52,7 @@ class JadwalView extends GetView<JadwalController> {
                   focusedDay: controller.focusedDay.value,
                   selectedDayPredicate: (day) => isSameDay(controller.selectedDay.value, day),
                   onDaySelected: controller.onDaySelected,
-                  onPageChanged: (focusedDay) {
-                    controller.focusedDay.value = focusedDay;
-                  },
+                  onPageChanged: controller.onPageChanged,
                   eventLoader: controller.getEventsForDay,
                   calendarFormat: CalendarFormat.month,
                   availableCalendarFormats: const {
@@ -74,35 +73,31 @@ class JadwalView extends GetView<JadwalController> {
                     dowTextFormatter: (date, locale) => DateFormat.E(locale).format(date).substring(0,1).toUpperCase(), 
                   ),
                   calendarBuilders: CalendarBuilders(
-                    // Kustomisasi tampilan tanggal default
-                    defaultBuilder: (context, day, focusedDay) {
-                      bool? isHadir = controller.getAttendanceStatus(day);
-                      if (isHadir == null) {
-                        return null; // Gunakan tampilan default jika tidak ada data
-                      }
-                      return _buildDayCell(day, isHadir ? hadirColor : tidakHadirColor, Colors.white);
-                    },
-                    // Kustomisasi tampilan tanggal yang dipilih
-                    selectedBuilder: (context, day, focusedDay) {
-                      return _buildDayCell(day, selectedColor, Colors.white, isSelected: true);
-                    },
-                    // Kustomisasi tampilan hari ini
-                    todayBuilder: (context, day, focusedDay) {
-                       bool? isHadir = controller.getAttendanceStatus(day);
-                       Color? bgColor = isHadir == null ? null : (isHadir ? hadirColor : tidakHadirColor);
-                       Color textColor = isHadir == null ? Colors.blue : Colors.white;
-                       
-                       // Jika hari ini juga terpilih, gunakan style selected
-                       if (isSameDay(day, controller.selectedDay.value)) {
-                         return _buildDayCell(day, selectedColor, Colors.white, isSelected: true, isToday: true);
-                       }
-
-                       return _buildDayCell(day, bgColor, textColor, isToday: true, isHadir: isHadir);
-                    },
-                    // Kustomisasi marker (titik di bawah tanggal)
-                    // Kita tidak pakai marker bawaan karena sudah mewarnai cell
                     markerBuilder: (context, day, events) {
-                      return const SizedBox.shrink(); // Sembunyikan marker default
+                      if (events.isEmpty) return const SizedBox.shrink();
+                      return Positioned(
+                        bottom: 1,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: events.map((event) {
+                            Color dotColor = Colors.grey;
+                            if (event is bool) {
+                              dotColor = event ? hadirColor : tidakHadirColor;
+                            } else if (event is Holiday) {
+                              dotColor = Colors.amber.shade700;
+                            }
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: dotColor,
+                                shape: BoxShape.circle,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
                     },
                   ),
                   calendarStyle: CalendarStyle(
@@ -126,8 +121,15 @@ class JadwalView extends GetView<JadwalController> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              _buildLegend(hadirColor, tidakHadirColor, selectedColor),
+              const SizedBox(height: 16),
+              _buildLegend(hadirColor, tidakHadirColor, Colors.amber.shade700),
+              const SizedBox(height: 16),
+              const Text(
+                'Detail Hari Terpilih',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Divider(),
+              Obx(() => _buildEventList(controller.getEventsForDay(controller.selectedDay.value ?? DateTime.now()))),
             ],
           ),
         );
@@ -135,37 +137,58 @@ class JadwalView extends GetView<JadwalController> {
     );
   }
 
-  // Helper widget untuk membangun sel tanggal
-  Widget _buildDayCell(DateTime day, Color? backgroundColor, Color textColor, {bool isSelected = false, bool isToday = false, bool? isHadir}) {
-    return Container(
-      margin: const EdgeInsets.all(4.0),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        shape: BoxShape.circle,
-        border: isToday && !isSelected && backgroundColor == null // Hanya border biru jika today & tidak ada status & tidak selected
-            ? Border.all(color: Colors.blue, width: 1.5)
-            : null,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '${day.day}',
-        style: TextStyle(
-          color: textColor,
-          fontWeight: isSelected || isHadir != null ? FontWeight.bold : FontWeight.normal,
+  Widget _buildEventList(List<dynamic> events) {
+    if (events.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('Tidak ada data untuk hari ini.', style: TextStyle(color: Colors.grey)),
         ),
-      ),
+      );
+    }
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: events.length,
+      itemBuilder: (context, index) {
+        final event = events[index];
+        if (event is Holiday) {
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ListTile(
+              leading: Icon(Icons.celebration_rounded, color: Colors.amber.shade700),
+              title: Text(event.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Hari Libur Nasional'),
+            ),
+          );
+        } else if (event is bool) {
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ListTile(
+              leading: Icon(
+                event ? Icons.check_circle_outline_rounded : Icons.highlight_off_rounded,
+                color: event ? Colors.green.shade400 : Colors.red.shade400,
+              ),
+              title: Text(event ? 'Hadir' : 'Tidak Hadir', style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Status Kehadiran'),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 
   // Helper widget untuk legenda
-  Widget _buildLegend(Color hadirColor, Color tidakHadirColor, Color selectedColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  Widget _buildLegend(Color hadirColor, Color tidakHadirColor, Color holidayColor) {
+    return Wrap(
+      spacing: 16.0,
+      runSpacing: 8.0,
+      alignment: WrapAlignment.center,
       children: [
         _legendItem(hadirColor, 'Hadir'),
         _legendItem(tidakHadirColor, 'Tidak Hadir'),
-        _legendItem(selectedColor, 'Terpilih'),
-        _legendItem(Colors.blue.withOpacity(0.8), 'Hari Ini (Default)'),
+        _legendItem(holidayColor, 'Hari Libur'),
       ],
     );
   }

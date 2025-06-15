@@ -3,13 +3,20 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:absenuk/app/routes/app_pages.dart'; // Untuk navigasi saat logout
+import 'package:url_launcher/url_launcher.dart';
+import 'package:absenuk/app/services/notification_service.dart';
 
 class SettingsController extends GetxController {
   final GetStorage _storageBox = GetStorage();
   final String _themeKey = 'themeSetting';
+  final String _reminderKey = 'reminderSetting';
+
+  // Services
+  final NotificationService _notificationService = NotificationService();
 
   // Tema Aplikasi
   late Rx<ThemeMode> currentThemeMode;
+  late RxBool isReminderEnabled;
 
   // Info Aplikasi
   RxString appVersion = ''.obs;
@@ -19,6 +26,7 @@ class SettingsController extends GetxController {
     super.onInit();
     _loadThemeSetting();
     _loadAppVersion();
+    _loadReminderSetting();
   }
 
   // === Tema Aplikasi ===
@@ -33,13 +41,46 @@ class SettingsController extends GetxController {
         themeMode = ThemeMode.dark;
         break;
       default:
-        themeMode = ThemeMode.system;
+        themeMode = ThemeMode.system; // Default ke tema sistem
     }
+    // Inisialisasi state controller dengan nilai dari storage,
+    // tanpa memaksa perubahan tema pada seluruh aplikasi.
     currentThemeMode = themeMode.obs;
-    // Tunda pemanggilan Get.changeThemeMode hingga setelah build selesai
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.changeThemeMode(themeMode);
-    });
+  }
+
+  void _loadReminderSetting() {
+    // Defaultnya false (tidak aktif)
+    isReminderEnabled = (_storageBox.read<bool>(_reminderKey) ?? false).obs;
+  }
+
+  Future<void> toggleReminder(bool value) async {
+    if (isReminderEnabled.value == value) return;
+
+    isReminderEnabled.value = value;
+    _storageBox.write(_reminderKey, value);
+
+    if (value) {
+      // Jika diaktifkan
+      await _notificationService.requestPermission();
+      await _notificationService.scheduleDailyReminders();
+      Get.snackbar(
+        'Pengingat Diaktifkan',
+        'Anda akan diingatkan untuk absen pagi (08:00) dan siang (13:00).',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else {
+      // Jika dinonaktifkan
+      await _notificationService.cancelAllNotifications();
+      Get.snackbar(
+        'Pengingat Dinonaktifkan',
+        'Anda tidak akan lagi menerima pengingat absen.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> runTestNotification() async {
+    await _notificationService.showTestNotification();
   }
 
   void changeTheme(ThemeMode? newThemeMode) {
@@ -73,6 +114,18 @@ class SettingsController extends GetxController {
     } catch (e) {
       appVersion.value = 'Tidak dapat memuat versi';
       print('Error loading app version: $e');
+    }
+  }
+
+  // === Pintasan Kampus ===
+  Future<void> launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      Get.snackbar(
+        'Gagal Membuka Tautan',
+        'Tidak dapat membuka $urlString',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:get_storage/get_storage.dart'; // Import GetStorage
+import 'package:get_storage/get_storage.dart';
 
 import 'app/routes/app_pages.dart';
+import 'package:absenuk/app/services/notification_service.dart';
 
 // --- Konfigurasi Font Outline ---
 // Untuk outline di tema gelap (teks putih, outline hitam tipis)
@@ -44,10 +45,13 @@ TextTheme applyCustomTextStyle(TextTheme base, TextStyle styleWithShadowAndColor
 }
 // --- Akhir Konfigurasi Font Outline ---
 
-void main() async { // Ubah menjadi async
-  WidgetsFlutterBinding.ensureInitialized(); // Pastikan binding Flutter siap
-  await initializeDateFormatting('id_ID', null); // Inisialisasi untuk locale Indonesia
-  await GetStorage.init(); // Inisialisasi GetStorage
+void main() async { 
+  WidgetsFlutterBinding.ensureInitialized(); 
+  await initializeDateFormatting('id_ID', null); 
+  await GetStorage.init();
+
+  // Inisialisasi Notification Service saat aplikasi dimulai
+  await NotificationService().init(); 
 
   // Ambil instance SettingsController untuk mendapatkan themeMode awal
   // Ini perlu dilakukan setelah GetStorage.init() dan sebelum runApp
@@ -109,6 +113,24 @@ void main() async { // Ubah menjadi async
           ThemeData.light().textTheme,
           const TextStyle(shadows: lightTextOutlineShadows),
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.black.withOpacity(0.04),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: const Color(0xFF8E2DE2), width: 2.0),
+          ),
+          labelStyle: TextStyle(color: Colors.grey[700]),
+        ),
       ),
 
       // Tema Gelap (Dark Mode)
@@ -153,6 +175,24 @@ void main() async { // Ubah menjadi async
         textTheme: applyCustomTextStyle(
           ThemeData.dark().textTheme,
           const TextStyle(color: Colors.white, shadows: darkTextOutlineShadows),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.06),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: const Color(0xFFa531f2), width: 2.0),
+          ),
+          labelStyle: TextStyle(color: Colors.grey[400]),
         ),
       ),
 
