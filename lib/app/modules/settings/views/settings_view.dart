@@ -53,12 +53,6 @@ class SettingsView extends GetView<SettingsController> {
                 onChanged: controller.toggleReminder,
                 activeColor: primaryColor,
               )),
-          ListTile(
-            title: const Text('Uji Notifikasi Sekarang'),
-            subtitle: const Text('Tampilkan notifikasi percobaan secara instan'),
-            leading: Icon(Icons.notifications_active_outlined, color: primaryColor),
-            onTap: controller.runTestNotification,
-          ),
 
           // Pintasan Kampus
           _buildSectionTitle(context, 'Pintasan Kampus'),

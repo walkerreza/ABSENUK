@@ -30,7 +30,7 @@ class ProfileView extends GetView<ProfileController> {
               const SizedBox(height: 24.0),
               _buildTextField(
                 controller: controller.nameController,
-                labelText: 'Nama Lengkap',
+                labelText: 'Nama', // Label diubah
                 icon: Icons.person_outline,
               ),
               const SizedBox(height: 16.0),
@@ -67,7 +67,7 @@ class ProfileView extends GetView<ProfileController> {
 
             // Prioritas 1: Gambar baru yang dipilih oleh pengguna
             if (controller.profileImage.value != null) {
-              backgroundImage = FileImage(controller.profileImage.value!);
+              backgroundImage = FileImage(File(controller.profileImage.value!.path));
             } 
             // Prioritas 2: Gambar yang sudah ada dari sesi sebelumnya (bisa URL atau path file)
             else if (homeController.photoUrl.value.isNotEmpty) {

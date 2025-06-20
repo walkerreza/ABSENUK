@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:absenuk/app/data/dummy_data.dart'; // Import data dummy
-import 'package:absenuk/app/routes/app_pages.dart'; // Import rute
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:absenuk/app/routes/app_pages.dart';
+import 'package:absenuk/app/data/providers/api.dart';
 import 'package:get_storage/get_storage.dart';
 
 class LoginController extends GetxController {
@@ -38,44 +40,68 @@ class LoginController extends GetxController {
   }
 
   // Fungsi untuk proses login
-  void login() {
-    // Validasi form
+  void login() async {
     if (formKey.currentState!.validate()) {
       isLoading.value = true;
-      // Simulasi jeda untuk meniru panggilan jaringan
-      Future.delayed(const Duration(milliseconds: 500), () {
-        // Cek kredensial dengan data dummy
-        if (nimController.text == DummyUser.user['nim'] &&
-            passwordController.text == DummyUser.user['password']) {
-          // Simpan data pengguna ke GetStorage
-          final box = GetStorage();
-          box.write('user', DummyUser.user);
-          // Simpan waktu login saat ini
-          box.write('login_time', DateTime.now().toIso8601String());
+      try {
+        final response = await http.post(
+          Uri.parse('${Api.baseUrl}/mahasiswa/login'), // Endpoint yang benar
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'nim': nimController.text,
+            'password': passwordController.text,
+          }),
+        ).timeout(const Duration(seconds: 10));
 
-          // Jika berhasil, navigasi ke halaman home
-          Get.offAllNamed(Routes.HOME);
-          Get.snackbar(
-            'Login Berhasil',
-            'Selamat datang, ${DummyUser.user['name']}',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+        final responseData = jsonDecode(response.body);
+
+        if (response.statusCode == 200) {
+          final data = responseData['data'];
+          // Berdasarkan Postman, respons login hanya berisi token.
+          if (data != null && data['token'] != null) {
+            final token = data['token'];
+
+            final box = GetStorage();
+            // Simpan token dan NIM. Data user akan diambil di halaman Home.
+            box.write('token', token);
+            box.write('nim', nimController.text); // Menyimpan NIM
+            box.write('isLoggedIn', true);
+            box.write('login_time', DateTime.now().toIso8601String());
+
+            Get.offAllNamed(Routes.HOME);
+            Get.snackbar(
+              'Login Berhasil',
+              'Selamat datang!', // Pesan generik karena nama user belum ada
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
+          } else {
+            // Jika token tidak ditemukan dalam respons, struktur tidak valid.
+            throw Exception('Struktur data respons tidak valid: token tidak ditemukan.');
+          }
         } else {
-          // Jika gagal, tampilkan pesan error
           Get.snackbar(
             'Login Gagal',
-            'NIM atau password salah.',
+            responseData['message'] ?? 'NIM atau Password salah.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
           );
         }
+      } catch (e) {
+        print('Login Error: $e'); // Menampilkan error detail di console
+        Get.snackbar(
+          'Terjadi Kesalahan',
+          'Tidak dapat terhubung ke server. Periksa koneksi Anda.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      } finally {
         isLoading.value = false;
-      });
+      }
     } else {
-      // Jika form tidak valid, tampilkan pesan atau biarkan validator yang bekerja
       Get.snackbar(
         'Input Tidak Valid',
         'Mohon periksa kembali input Anda.',

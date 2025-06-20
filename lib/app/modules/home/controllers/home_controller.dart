@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:absenuk/app/data/providers/api.dart';
 import '../../../routes/app_pages.dart';
 import '../info_model.dart';
 
@@ -29,7 +30,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadUserData();
+    fetchUserProfile(); // Menggantikan _loadUserData
     fetchInfoData();
     _startTimer(); // Memulai jam real-time
   }
@@ -83,6 +84,8 @@ class HomeController extends GetxController {
       }
     } catch (e) {
       hasError(true);
+      print('Home Controller Error: $e'); // Menampilkan error detail di console
+      // Tangani error koneksi atau timeout di sini
       Get.snackbar('Gagal Memuat', 'Terjadi kesalahan jaringan atau timeout.');
     } finally {
       isLoading(false);
@@ -208,12 +211,71 @@ class HomeController extends GetxController {
     }
   }
 
-  void _loadUserData() {
+  Future<void> fetchUserProfile() async {
     final box = GetStorage();
-    final userData = box.read<Map<String, dynamic>>('user');
-    if (userData != null) {
-      userName.value = userData['name'] ?? 'Pengguna';
-      photoUrl.value = userData['photoUrl'] ?? '';
+    final token = box.read<String>('token');
+
+    // Tampilkan data dari storage dulu untuk UI yang responsif
+    final storedUser = box.read<Map<String, dynamic>>('user');
+    if (storedUser != null) {
+      // Gunakan key yang benar ('nama' dan 'image') sesuai dengan struktur data API
+      userName.value = storedUser['nama'] ?? 'Pengguna';
+      final storedImageUrl = storedUser['image'] ?? '';
+      if (storedImageUrl.isNotEmpty && !storedImageUrl.startsWith('http')) {
+        final baseUrl = Api.baseUrl.replaceAll('/api', '');
+        photoUrl.value = '$baseUrl$storedImageUrl';
+      } else {
+        photoUrl.value = storedImageUrl;
+      }
+    }
+
+    final nim = box.read<String>('nim');
+
+    if (token == null || nim == null) {
+      // Jika token atau NIM tidak ada, sesi tidak lengkap. Arahkan ke login.
+      Get.offAllNamed(Routes.LOGIN);
+      return;
+    }
+
+    try {
+      // Menggunakan endpoint yang benar sesuai dokumentasi Postman
+      final response = await http.get(
+        Uri.parse('${Api.baseUrl}/mahasiswa/nim/$nim'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        // Berdasarkan Postman terbaru, data adalah objek tunggal.
+        final newUserData = responseData['data'] as Map<String, dynamic>?;
+        if (newUserData != null) {
+          // Perbarui data di UI dan storage
+          userName.value = newUserData['nama'] ?? 'Pengguna';
+          final newImageUrl = newUserData['image'] ?? '';
+          // Simpan data mentah di storage, tapi bangun URL absolut untuk UI
+          box.write('user', newUserData);
+
+          if (newImageUrl.isNotEmpty && !newImageUrl.startsWith('http')) {
+            final baseUrl = Api.baseUrl.replaceAll('/api', '');
+            photoUrl.value = '$baseUrl$newImageUrl';
+          } else {
+            photoUrl.value = newImageUrl;
+          }
+        }
+      } else if (response.statusCode == 401) {
+        // Token tidak valid atau kedaluwarsa, hapus sesi dan arahkan ke login
+        box.erase();
+        Get.offAllNamed(Routes.LOGIN);
+        Get.snackbar('Sesi Berakhir', 'Silakan login kembali.');
+      }
+      // Error lain bisa ditangani di sini jika perlu
+
+    } catch (e) {
+      // Tidak menampilkan snackbar agar tidak mengganggu jika hanya gagal fetch update
+      print('Gagal mengambil profil terbaru: $e');
     }
   }
 

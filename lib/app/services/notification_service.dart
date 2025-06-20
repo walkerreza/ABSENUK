@@ -101,17 +101,6 @@ class NotificationService {
   }
 
   // Fungsi untuk membatalkan semua notifikasi
-  // Fungsi untuk menampilkan notifikasi tes secara instan
-  Future<void> showTestNotification() async {
-    await _notificationsPlugin.show(
-      99, // ID unik untuk notifikasi tes
-      'Ini Notifikasi Percobaan',
-      'Jika Anda bisa melihat ini dan mengkliknya, semuanya bekerja!',
-      _notificationDetails(),
-      payload: 'ABSEN_REMINDER', // Menggunakan payload yang sama untuk menguji navigasi
-    );
-  }
-
   // Fungsi untuk membatalkan semua notifikasi
   Future<void> cancelAllNotifications() async {
     await _notificationsPlugin.cancelAll();

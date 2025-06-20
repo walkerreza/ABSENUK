@@ -79,10 +79,6 @@ class SettingsController extends GetxController {
     }
   }
 
-  Future<void> runTestNotification() async {
-    await _notificationService.showTestNotification();
-  }
-
   void changeTheme(ThemeMode? newThemeMode) {
     if (newThemeMode == null) return;
     if (currentThemeMode.value == newThemeMode) return;
@@ -131,13 +127,12 @@ class SettingsController extends GetxController {
 
   // === Logout ===
   void logout() {
-    // Di sini Anda bisa menambahkan logika pembersihan data sesi,
-    // seperti menghapus token, data user dari GetStorage, dll.
-    // Contoh:
-    // _storageBox.remove('user_token');
-    // _storageBox.remove('user_data');
+    // Hapus semua data sesi dari GetStorage untuk memastikan logout bersih.
+    _storageBox.remove('user');
+    _storageBox.remove('token');
+    _storageBox.remove('isLoggedIn');
 
-    // Navigasi ke halaman login dan hapus semua halaman sebelumnya dari stack
+    // Navigasi ke halaman login dan hapus semua halaman sebelumnya dari stack.
     Get.offAllNamed(Routes.LOGIN); 
   }
 }

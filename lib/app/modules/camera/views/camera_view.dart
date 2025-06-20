@@ -1,122 +1,80 @@
-import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:absenuk/app/modules/camera/controllers/camera_controller.dart';
+
+import '../controllers/camera_controller.dart';
+import '../widgets/face_painter.dart';
 
 class CameraView extends GetView<CameraViewController> {
   const CameraView({super.key});
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Obx(() => Text(controller.isPictureTaken.value ? 'Konfirmasi Foto' : 'Pindai Wajah')),
+        title: const Text('Pindai Wajah'),
         centerTitle: true,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: theme.iconTheme.color),
-          onPressed: () => Get.back(),
-        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => controller.switchCamera(),
+        child: Obx(() => Icon(
+              controller.cameraLensDirection.value == CameraLensDirection.front
+                  ? Icons.camera_rear
+                  : Icons.camera_front,
+            )),
+      ),
+      body: Obx(() {
+        if (!controller.isCameraInitialized.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // Widget untuk menampilkan stream kamera dengan overlay deteksi wajah
+        return Stack(
+          fit: StackFit.expand,
           children: [
-            Expanded(
-              child: buildCameraArea(context),
-            ),
-            const SizedBox(height: 20),
-            buildButtonArea(context),
-          ],
-        ),
-      ),
-    );
-  }
+            CameraPreview(controller.cameraController),
 
-  Widget buildCameraArea(BuildContext context) {
-    return Obx(() {
-      if (!controller.isCameraInitialized.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
+            // Overlay untuk menggambar kotak di sekitar wajah.
+            // Kita gunakan Obx lagi di sini agar hanya painter yang di-rebuild
+            // saat wajah terdeteksi, bukan seluruh Stack, untuk performa lebih baik.
+            Obx(() {
+                            if (controller.imageSize.value != null &&
+                  controller.detectedFaces.isNotEmpty) {
+                return CustomPaint(
+                  painter: FacePainter(
+                                        imageSize: controller.imageSize.value!,
+                    faces: controller.detectedFaces,
+                    cameraLensDirection:
+                        controller.cameraController.description.lensDirection,
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            }),
 
-      if (controller.isPictureTaken.value && controller.capturedImage != null) {
-        // Tampilan setelah gambar diambil
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Image.file(
-            File(controller.capturedImage!.path),
-            fit: BoxFit.cover,
-          ),
-        );
-      } else {
-        // Tampilan preview kamera
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: CameraPreview(controller.cameraController),
-        );
-      }
-    });
-  }
-
-  Widget buildButtonArea(BuildContext context) {
-    final theme = Theme.of(context);
-    final buttonStyle = ElevatedButton.styleFrom(
-      backgroundColor: theme.primaryColor,
-      foregroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, 50),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      textStyle: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-
-    final secondaryButtonStyle = ElevatedButton.styleFrom(
-      backgroundColor: theme.cardColor,
-      foregroundColor: theme.textTheme.bodyLarge?.color,
-      minimumSize: const Size(double.infinity, 50),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      textStyle: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-
-    return Obx(() {
-      if (controller.isPictureTaken.value) {
-        // Tombol setelah gambar diambil
-        return Column(
-          children: [
-            ElevatedButton(
-              style: secondaryButtonStyle,
-              onPressed: controller.reset,
-              child: const Text('Ulangi'),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              style: buttonStyle,
-              onPressed: controller.saveAndStop,
-              child: const Text('Simpan & Lanjutkan'),
+            // Pesan panduan untuk pengguna
+            Positioned(
+              bottom: 50,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                color: Colors.black.withOpacity(0.6),
+                child: const Text(
+                  'Posisikan wajah Anda di tengah kamera',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         );
-      } else {
-        // Tombol sebelum scan
-        return ElevatedButton(
-          style: buttonStyle,
-          onPressed: controller.takePicture,
-          child: const Text('Ambil Gambar'),
-        );
-      }
-    });
+      }),
+    );
   }
 }

@@ -61,10 +61,13 @@ void main() async {
   // saat SettingsPage pertama kali dibuka atau controller diakses.
   // GetMaterialApp akan menggunakan ThemeMode.system secara default jika tidak ada yang disimpan.
 
+  final box = GetStorage();
+  final bool isLoggedIn = box.read('isLoggedIn') ?? false;
+
   runApp(
     GetMaterialApp(
       title: "Application",
-      initialRoute: AppPages.INITIAL,
+      initialRoute: isLoggedIn ? Routes.HOME : AppPages.INITIAL,
       getPages: AppPages.routes,
       locale: const Locale('id', 'ID'),
       fallbackLocale: const Locale('en', 'US'),

@@ -1,10 +1,15 @@
-import 'dart:io';
+
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:absenuk/app/modules/home/controllers/home_controller.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:absenuk/app/data/providers/api.dart';
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ProfileController extends GetxController {
   // TextEditingControllers untuk input fields
@@ -14,11 +19,12 @@ class ProfileController extends GetxController {
   late TextEditingController passwordController;
 
   // Variabel reaktif
-  final Rx<File?> profileImage = Rx<File?>(null);
+  final Rx<XFile?> profileImage = Rx<XFile?>(null);
   final Rx<int?> selectedSemester = Rx<int?>(null);
   final Rx<String?> selectedProdi = Rx<String?>(null);
   final RxBool obscurePassword = true.obs;
   final RxBool isLoading = false.obs;
+  final RxString existingImageUrl = ''.obs;
 
   // Instance ImagePicker
   final ImagePicker _picker = ImagePicker();
@@ -50,15 +56,21 @@ class ProfileController extends GetxController {
     final box = GetStorage();
     final userData = box.read<Map<String, dynamic>>('user');
     if (userData != null) {
-      nameController.text = userData['name'] ?? '';
-      // Asumsi NIM dan Prodi juga ada di data pengguna, jika tidak, biarkan kosong
-      nimController.text = userData['nim'] ?? ''; 
-      if (userData['prodi'] != null && prodiList.contains(userData['prodi'])) {
-        selectedProdi.value = userData['prodi'];
+      nameController.text = userData['nama'] ?? '';
+      nimController.text = userData['nim'] ?? '';
+      passwordController.text = ''; // Password field is kept empty for security
+      existingImageUrl.value = userData['image'] ?? ''; // Load existing image URL
+
+      final prodiData = userData['prodi'] as Map<String, dynamic>?;
+      if (prodiData != null) {
+        final prodiName = prodiData['nama'] as String?;
+        if (prodiName != null) {
+          if (!prodiList.contains(prodiName)) {
+            prodiList.add(prodiName);
+          }
+          selectedProdi.value = prodiName;
+        }
       }
-      passwordController.text = userData['password'] ?? '';
-      // Untuk foto, kita akan menangani path lokal, bukan URL dari dummy
-      // selectedSemester.value = userData['semester']; // Jika ada
     }
   }
 
@@ -77,7 +89,7 @@ class ProfileController extends GetxController {
     try {
       final XFile? pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
-        profileImage.value = File(pickedFile.path);
+        profileImage.value = pickedFile;
       } else {
         Get.snackbar('Batal', 'Tidak ada gambar yang dipilih.');
       }
@@ -92,50 +104,98 @@ class ProfileController extends GetxController {
   }
 
   // Fungsi untuk menyimpan perubahan profil
-  void saveProfile() {
+  Future<void> saveProfile() async {
     isLoading.value = true;
-    // Validasi sederhana (bisa ditambahkan validasi lebih detail)
-    if (nameController.text.isEmpty ||
-        nimController.text.isEmpty ||
-        selectedProdi.value == null ||
-        passwordController.text.isEmpty ||
-        selectedSemester.value == null) {
-      Get.snackbar('Error', 'Semua field harus diisi.',
-          snackPosition: SnackPosition.BOTTOM);
+
+    if (nameController.text.isEmpty || nimController.text.isEmpty || selectedProdi.value == null) {
+      Get.snackbar('Error', 'Nama, NIM, dan Program Studi harus diisi.', snackPosition: SnackPosition.BOTTOM);
       isLoading.value = false;
       return;
     }
 
-    // Proses penyimpanan
     final box = GetStorage();
-    // Ambil data lama untuk menjaga field yang tidak diubah (seperti photoUrl awal)
-    Map<String, dynamic> currentUserData = box.read('user') ?? {};
+    final token = box.read<String>('token');
+    if (token == null) {
+      Get.snackbar('Error', 'Sesi tidak valid. Silakan login kembali.', snackPosition: SnackPosition.BOTTOM);
+      isLoading.value = false;
+      return;
+    }
 
-    // Buat data baru
-    Map<String, dynamic> updatedUserData = {
-      ...currentUserData, // Salin data lama
-      'name': nameController.text,
-      'nim': nimController.text,
-      'prodi': selectedProdi.value!,
-      'password': passwordController.text,
-      // Jika ada gambar baru, simpan path lokalnya. Jika tidak, pertahankan URL lama.
-      'photoUrl': profileImage.value?.path ?? currentUserData['photoUrl'] ?? '',
-    };
+    try {
+      // Sesuai dengan route backend: PUT /mahasiswa/nim/:nim
+      var request = http.MultipartRequest('PUT', Uri.parse('${Api.baseUrl}/mahasiswa/nim/${nimController.text}'));
 
-    // Simpan data baru ke GetStorage
-    box.write('user', updatedUserData);
+      request.headers['Authorization'] = 'Bearer $token';
+      request.fields['nama'] = nameController.text;
+      request.fields['prodi'] = selectedProdi.value!;
 
-    // Perbarui HomeController agar UI di home juga berubah
-    final homeController = Get.find<HomeController>();
-    homeController.userName.value = updatedUserData['name'];
-    homeController.photoUrl.value = updatedUserData['photoUrl'];
+      if (passwordController.text.isNotEmpty) {
+        request.fields['password'] = passwordController.text;
+      }
 
-    isLoading.value = false;
-    Get.back(); // Kembali ke halaman home setelah menyimpan
-    Get.snackbar('Sukses', 'Profil berhasil diperbarui.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white);
+      if (profileImage.value != null) {
+        final imageXFile = profileImage.value!;
+        // Gunakan nama asli file untuk mendapatkan MIME type yang benar, bukan path sementara.
+        final mimeType = lookupMimeType(imageXFile.name);
 
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image', // field name
+            imageXFile.path, // path ke file di cache
+            contentType: MediaType.parse(mimeType ?? 'application/octet-stream'),
+            filename: imageXFile.name, // Kirim nama file asli ke server
+          ),
+        );
+      }
+
+      var streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      // Log untuk debugging
+      debugPrint('Update Profile Status Code: ${response.statusCode}');
+      debugPrint('Update Profile Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final updatedUserData = responseData['data'];
+
+        box.write('user', updatedUserData);
+
+        final homeController = Get.find<HomeController>();
+        // Perbarui data di HomeController dengan data baru dari server
+        homeController.userName.value = updatedUserData['nama'] ?? '';
+        final newImageUrl = updatedUserData['image'] ?? '';
+
+        // Simpan data mentah di storage, tapi bangun URL absolut untuk UI
+        if (newImageUrl.isNotEmpty && !newImageUrl.startsWith('http')) {
+          final baseUrl = Api.baseUrl.replaceAll('/api', '');
+          homeController.photoUrl.value = '$baseUrl$newImageUrl';
+        } else {
+          homeController.photoUrl.value = newImageUrl;
+        }
+
+        // Perbarui juga UI di halaman profil ini dan reset pilihan gambar
+        existingImageUrl.value = homeController.photoUrl.value;
+        profileImage.value = null;
+
+        passwordController.clear(); // Kosongkan field password setelah sukses
+        Get.back();
+        Get.snackbar('Sukses', 'Profil berhasil diperbarui.', snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green, colorText: Colors.white);
+      } else {
+        // Coba decode JSON, jika gagal, tampilkan body mentah sebagai error
+        try {
+          final responseData = json.decode(response.body);
+          Get.snackbar('Gagal Memperbarui', responseData['message'] ?? 'Terjadi kesalahan pada server.', snackPosition: SnackPosition.BOTTOM);
+        } catch (_) {
+          Get.snackbar('Gagal Memperbarui', 'Server memberikan respons tidak terduga. Status: ${response.statusCode}', snackPosition: SnackPosition.BOTTOM);
+        }
+      }
+    } catch (e) {
+      // Tangani error koneksi atau parsing
+      debugPrint('Save Profile Error: $e');
+      Get.snackbar('Error Klien', 'Terjadi masalah saat mengirim data: $e', snackPosition: SnackPosition.BOTTOM);
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
