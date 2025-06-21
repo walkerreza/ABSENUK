@@ -17,7 +17,7 @@ class IntroductionView extends GetView<IntroductionController> {
         gradient: LinearGradient(
           colors: [
             Color(0xFF31053B), // Ungu Sangat Gelap
-            Color(0xFF881246), // Merah Gelap
+            Color.fromARGB(255, 116, 18, 136), // Merah Gelap
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -36,7 +36,7 @@ class IntroductionView extends GetView<IntroductionController> {
                   const Spacer(flex: 2),
                   // Logo Aplikasi
                   Image.asset(
-                    'assets/icon/ABSENUK.png',
+                    'assets/icon/ABSENUK2.png',
                     height: 120,
                     width: 120,
                   ),

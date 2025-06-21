@@ -19,7 +19,7 @@ class LoginView extends GetView<LoginController> {
         gradient: LinearGradient(
           colors: [
             Color(0xFF31053B), // Ungu Sangat Gelap
-            Color(0xFF881246), // Merah Gelap
+            Color.fromARGB(255, 85, 18, 136), // Merah Gelap
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -44,7 +44,7 @@ class LoginView extends GetView<LoginController> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    Image.asset('assets/icon/ABSENUK.png', height: 80),
+                    Image.asset('assets/icon/ABSENUK2.png', height: 80),
                     const SizedBox(height: 24.0),
                     const Text(
                       'Selamat Datang Kembali!',
@@ -118,7 +118,7 @@ class LoginView extends GetView<LoginController> {
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) return 'Password tidak boleh kosong';
-                            if (value.length < 6) return 'Password minimal 6 karakter';
+                            if (value.length < 4) return 'Password minimal 4 karakter';
                             return null;
                           },
                         )),
