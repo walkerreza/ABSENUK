@@ -39,6 +39,7 @@ class ProfileView extends GetView<ProfileController> {
                 labelText: 'NIM (Nomor Induk Mahasiswa)',
                 icon: Icons.badge_outlined,
                 keyboardType: TextInputType.number,
+                readOnly: true,
               ),
               const SizedBox(height: 16.0),
               _buildProdiDropdown(controller, primaryColor),
@@ -137,14 +138,16 @@ class ProfileView extends GetView<ProfileController> {
     required TextEditingController controller,
     required String labelText,
     required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
     Widget? suffixIcon,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: keyboardType,
       obscureText: obscureText,
+      keyboardType: keyboardType,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: Icon(icon),
@@ -168,11 +171,7 @@ class ProfileView extends GetView<ProfileController> {
               child: Text('Semester $semester'),
             );
           }).toList(),
-          onChanged: (int? newValue) {
-            if (newValue != null) {
-              controller.selectedSemester.value = newValue;
-            }
-          },
+          onChanged: null,
           decoration: const InputDecoration(
             labelText: 'Semester Saat Ini',
             prefixIcon: Icon(Icons.format_list_numbered_outlined),
@@ -190,11 +189,7 @@ class ProfileView extends GetView<ProfileController> {
               child: Text(prodi, overflow: TextOverflow.ellipsis),
             );
           }).toList(),
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              controller.selectedProdi.value = newValue;
-            }
-          },
+          onChanged: null,
           decoration: const InputDecoration(
             labelText: 'Program Studi',
             prefixIcon: Icon(Icons.school_outlined),

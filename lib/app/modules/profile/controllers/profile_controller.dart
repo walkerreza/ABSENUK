@@ -58,6 +58,27 @@ class ProfileController extends GetxController {
     if (userData != null) {
       nameController.text = userData['nama'] ?? '';
       nimController.text = userData['nim'] ?? '';
+
+      if (userData['semester'] != null && userData['semester'] is Map) {
+        final semesterName = userData['semester']['nama'] as String?;
+        if (semesterName != null) {
+          try {
+            // Ekstrak angka dari string, misal "Semester 4" -> 4
+            final semesterNumber = int.parse(semesterName.split(' ').last);
+            selectedSemester.value = semesterNumber;
+          } catch (e) {
+            debugPrint('Error parsing semester: $e');
+            selectedSemester.value = null;
+          }
+        }
+      }
+
+      if (userData['prodi'] != null && userData['prodi'] is Map) {
+        selectedProdi.value = userData['prodi']['nama'];
+      } else {
+        // Fallback untuk struktur data lama jika prodi masih string biasa
+        selectedProdi.value = userData['prodi'];
+      }
       passwordController.text = ''; // Password field is kept empty for security
       existingImageUrl.value = userData['image'] ?? ''; // Load existing image URL
 
