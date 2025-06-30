@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:absenuk/app/data/providers/api.dart';
 import '../../../routes/app_pages.dart';
 import '../info_model.dart';
+import 'package:absenuk/app/modules/profile/controllers/profile_controller.dart';
 
 class HomeController extends GetxController {
   // State untuk jam real-time
@@ -30,9 +31,25 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchUserProfile(); // Menggantikan _loadUserData
+    _syncAndLoadUserData(); // Memanggil fungsi baru
     fetchInfoData();
     _startTimer(); // Memulai jam real-time
+  }
+
+  Future<void> _syncAndLoadUserData() async {
+    // Pertama, coba sinkronkan data dari server secara diam-diam.
+    try {
+      // Kita perlu instance dari ProfileController untuk memanggil fungsi sinkronisasi.
+      // Get.put() akan membuat instance baru jika belum ada, atau menemukan yang sudah ada.
+      final profileController = Get.put(ProfileController());
+      await profileController.syncProfileDataFromServer();
+    } catch (e) {
+      debugPrint('Error during background sync: $e');
+      // Tidak perlu menampilkan error ke pengguna, ini proses latar belakang.
+    }
+
+    // Kedua, setelah sinkronisasi (atau jika gagal), muat data dari penyimpanan lokal.
+    fetchUserProfile();
   }
 
   @override

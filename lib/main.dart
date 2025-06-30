@@ -4,7 +4,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'app/routes/app_pages.dart';
+import 'package:absenuk/app/services/ml_service.dart';
 import 'package:absenuk/app/services/notification_service.dart';
+import 'package:face_camera/face_camera.dart';
 
 // --- Konfigurasi Font Outline ---
 // Untuk outline di tema gelap (teks putih, outline hitam tipis)
@@ -52,6 +54,16 @@ void main() async {
 
   // Inisialisasi Notification Service saat aplikasi dimulai
   await NotificationService().init(); 
+
+  // Inisialisasi FaceCamera
+    await FaceCamera.initialize();
+
+  // Daftarkan MLService secara asinkron untuk memastikan model ML dimuat
+  await Get.putAsync<MLService>(() async {
+    final service = MLService();
+    await service.initialize();
+    return service;
+  }); 
 
   // Ambil instance SettingsController untuk mendapatkan themeMode awal
   // Ini perlu dilakukan setelah GetStorage.init() dan sebelum runApp

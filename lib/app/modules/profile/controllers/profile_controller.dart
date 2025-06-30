@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'package:absenuk/app/data/providers/api.dart';
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:absenuk/app/services/ml_service.dart';
+import 'dart:io';
 
 class ProfileController extends GetxController {
   // TextEditingControllers untuk input fields
@@ -125,6 +127,58 @@ class ProfileController extends GetxController {
   }
 
   // Fungsi untuk menyimpan perubahan profil
+  /// Mengambil data profil terbaru dari server dan memperbarui penyimpanan lokal.
+  /// Dijalankan di latar belakang untuk memastikan data selalu sinkron.
+  Future<void> syncProfileDataFromServer() async {
+    final box = GetStorage();
+    final token = box.read<String>('token');
+    final localUserData = box.read<Map<String, dynamic>>('user');
+
+    if (token == null || localUserData == null || localUserData['nim'] == null) {
+      debugPrint('Sync skipped: Token or user data not found.');
+      return;
+    }
+
+    final String nim = localUserData['nim'];
+
+    try {
+      final response = await http.get(
+        Uri.parse('${Api.baseUrl}/mahasiswa/nim/$nim'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['data'] != null) {
+          final Map<String, dynamic> serverUserData = responseData['data'];
+
+          // Safety net: Jika server tidak mengembalikan embedding,
+          // tapi kita punya satu di lokal, pertahankan yang lokal.
+          if (serverUserData['face_embedding'] == null && localUserData['face_embedding'] != null) {
+            serverUserData['face_embedding'] = localUserData['face_embedding'];
+          }
+
+          // Timpa data lokal dengan data server yang sudah diperbarui
+          await box.write('user', serverUserData);
+          debugPrint('User profile synced successfully from server.');
+
+          // Muat ulang data ke controller jika halaman profil sedang aktif
+          if (isClosed == false) {
+             _loadUserProfile();
+          }
+        }
+      } else {
+        debugPrint('Failed to sync profile. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error syncing profile data: $e');
+    }
+  }
+
+  // Fungsi untuk menyimpan perubahan profil
   Future<void> saveProfile() async {
     isLoading.value = true;
 
@@ -178,16 +232,37 @@ class ProfileController extends GetxController {
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
-        final updatedUserData = responseData['data'];
+        final updatedUserData = responseData['data']; // Data baru dari server
 
+        // Ambil data pengguna saat ini dari storage untuk mempertahankan embedding jika tidak ada gambar baru.
+        final Map<String, dynamic> oldUserData = box.read('user') ?? {};
+        final dynamic oldEmbedding = oldUserData['face_embedding'];
+
+        // Jika ada gambar baru, proses dan simpan embedding wajah yang baru
+        if (profileImage.value != null) {
+          final mlService = Get.find<MLService>();
+          final imageFile = File(profileImage.value!.path);
+          final List<double>? newEmbedding = await mlService.getEmbeddingFromFile(imageFile);
+          if (newEmbedding != null) {
+            updatedUserData['face_embedding'] = newEmbedding;
+          } else {
+            Get.snackbar('Gagal', 'Tidak dapat memproses fitur wajah dari gambar. Silakan coba foto lain yang lebih jelas.', snackPosition: SnackPosition.BOTTOM);
+            isLoading.value = false;
+            return; // Hentikan proses jika embedding gagal
+          }
+        } else if (oldEmbedding != null) {
+          // Jika TIDAK ada gambar baru, tapi ada embedding lama di storage,
+          // salin embedding lama ke data yang akan disimpan.
+          updatedUserData['face_embedding'] = oldEmbedding;
+        }
+
+        // Simpan data pengguna yang sudah diperbarui (dengan embedding yang benar)
         box.write('user', updatedUserData);
 
         final homeController = Get.find<HomeController>();
-        // Perbarui data di HomeController dengan data baru dari server
         homeController.userName.value = updatedUserData['nama'] ?? '';
         final newImageUrl = updatedUserData['image'] ?? '';
 
-        // Simpan data mentah di storage, tapi bangun URL absolut untuk UI
         if (newImageUrl.isNotEmpty && !newImageUrl.startsWith('http')) {
           final baseUrl = Api.baseUrl.replaceAll('/api', '');
           homeController.photoUrl.value = '$baseUrl$newImageUrl';
@@ -195,7 +270,6 @@ class ProfileController extends GetxController {
           homeController.photoUrl.value = newImageUrl;
         }
 
-        // Perbarui juga UI di halaman profil ini dan reset pilihan gambar
         existingImageUrl.value = homeController.photoUrl.value;
         profileImage.value = null;
 

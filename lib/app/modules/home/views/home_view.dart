@@ -161,7 +161,7 @@ class HomeView extends GetView<HomeController> {
   Widget _buildMenuGrid(BuildContext context, HomeController controller) {
     final menuItems = [
       {'icon': Icons.login_outlined, 'label': 'Absen Masuk', 'action': controller.goToAbsenMasuk},
-      {'icon': Icons.logout_outlined, 'label': 'Absen Keluar', 'action': controller.goToAbsenKeluar},
+      {'icon': Icons.logout_outlined, 'label': 'Absen Pulang', 'action': controller.goToAbsenKeluar},
       {'icon': Icons.calendar_today_outlined, 'label': 'Jadwal Presensi', 'action': controller.goToJadwalPresensi},
       {'icon': Icons.book_outlined, 'label': 'Daftar Mata Kuliah', 'action': controller.goToDaftarMatkul},
     ];

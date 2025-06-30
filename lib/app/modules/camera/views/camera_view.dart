@@ -1,80 +1,73 @@
-import 'package:camera/camera.dart';
+import 'package:face_camera/face_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/camera_controller.dart';
-import '../widgets/face_painter.dart';
 
-class CameraView extends GetView<CameraViewController> {
+class CameraView extends GetView<CameraController> {
   const CameraView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pindai Wajah'),
+        title: const Text('Ambil Foto Wajah'),
         centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => controller.switchCamera(),
-        child: Obx(() => Icon(
-              controller.cameraLensDirection.value == CameraLensDirection.front
-                  ? Icons.camera_rear
-                  : Icons.camera_front,
-            )),
-      ),
-      body: Obx(() {
-        if (!controller.isCameraInitialized.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        // Widget untuk menampilkan stream kamera dengan overlay deteksi wajah
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            CameraPreview(controller.cameraController),
-
-            // Overlay untuk menggambar kotak di sekitar wajah.
-            // Kita gunakan Obx lagi di sini agar hanya painter yang di-rebuild
-            // saat wajah terdeteksi, bukan seluruh Stack, untuk performa lebih baik.
-            Obx(() {
-                            if (controller.imageSize.value != null &&
-                  controller.detectedFaces.isNotEmpty) {
-                return CustomPaint(
-                  painter: FacePainter(
-                                        imageSize: controller.imageSize.value!,
-                    faces: controller.detectedFaces,
-                    cameraLensDirection:
-                        controller.cameraController.description.lensDirection,
-                  ),
-                );
-              } else {
-                return const SizedBox.shrink();
+      body: Stack(
+        children: [
+          SmartFaceCamera(
+            controller: controller.faceCameraController,
+            messageBuilder: (context, face) {
+              if (face == null) {
+                return _message('Posisikan wajah Anda di dalam kamera');
               }
-            }),
-
-            // Pesan panduan untuk pengguna
-            Positioned(
-              bottom: 50,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                color: Colors.black.withOpacity(0.6),
-                child: const Text(
-                  'Posisikan wajah Anda di tengah kamera',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              if (!face.wellPositioned) {
+                return _message('Posisikan wajah Anda di tengah kotak');
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          Obx(() {
+            if (controller.isMatching.value) {
+              return Container(
+                color: Colors.black.withOpacity(0.7),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 20),
+                      Text(
+                        controller.statusMessage.value,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-          ],
-        );
-      }),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+        ],
+      ),
     );
   }
+
+  Widget _message(String msg) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
+        child: Text(
+          msg,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      );
 }
