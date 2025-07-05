@@ -4,7 +4,7 @@ class MataKuliah {
   final String jamSelesai;
   final String ruangan;
   final String dosen;
-  final String hari; // e.g., "Senin", "Selasa"
+  final String hari;
 
   MataKuliah({
     required this.namaMatkul,
@@ -14,4 +14,15 @@ class MataKuliah {
     required this.dosen,
     required this.hari,
   });
+
+  factory MataKuliah.fromJson(Map<String, dynamic> json) {
+    return MataKuliah(
+      namaMatkul: json['nama_matkul'] ?? 'Tanpa Nama',
+      jamMulai: json['jam_mulai'] ?? '',
+      jamSelesai: json['jam_selesai'] ?? '',
+      ruangan: json['ruangan'] ?? 'N/A',
+      dosen: json['dosen'] ?? 'N/A',
+      hari: json['hari'] ?? '',
+    );
+  }
 }

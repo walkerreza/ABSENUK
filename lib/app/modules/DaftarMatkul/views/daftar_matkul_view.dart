@@ -18,12 +18,16 @@ class DaftarMatkulView extends GetView<DaftarMatkulController> {
         centerTitle: true, // Sesuai wireframe, judul di tengah
       ),
       body: Obx(() { // Gunakan Obx untuk reaktivitas jika data jadwal berubah
-        if (controller.jadwalPerHari.isEmpty && controller.semuaMataKuliah.isNotEmpty) {
-          // Ini bisa terjadi jika pengelompokan belum selesai atau ada kondisi lain
-          // Atau jika semuaMataKuliah kosong setelah load awal
+        if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
-        } else if (controller.semuaMataKuliah.isEmpty) {
-            return const Center(child: Text('Tidak ada jadwal mata kuliah.'));
+        }
+
+        if (controller.errorMessage.isNotEmpty) {
+          return Center(child: Text(controller.errorMessage.value));
+        }
+
+        if (controller.semuaMataKuliah.isEmpty) {
+          return const Center(child: Text('Tidak ada jadwal mata kuliah untuk ditampilkan.'));
         }
 
         return ListView.builder(
